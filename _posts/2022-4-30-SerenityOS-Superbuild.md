@@ -53,7 +53,7 @@ At this point in time, the basics of the toolchain build were already in place:
 
 But wait, we can just download a version of gcc from our linux distribution's pacakage manager right? Why do we need to build the compiler and linker from source? The answer is simple to state, but subtle to explain: We need a cross-compiler toolchain that knows how to ``target`` serenity, and upstream gcc/binutils don't know anything about serenity.
 
-### Cross-compiler? And what's a sysroot?
+### What's a cross-compiler?
 
 Before we go much further, it's important to understand what a cross-compiler and compiler "sysroot" actually is, and why we need both of them.
 
@@ -110,8 +110,30 @@ To summarize, a cross-compiler is a compiler where the ``host`` and ``target`` m
 
 Now that we have an intuition for why we need a cross-compiler in order to create serenity userspace applications it's time to build one. But not so fast, the compiler actually needs some help from us, the OS developers, to define what properties our target operating system has. If we want to build the C++ standard library (we do) for the compiler's runtime support, we'll need to tell the STL build what features and methods our OS's C standard library has. This is where two related concepts come into play: Toolchain patches, and our OS sysroot.
 
+### Toolchain patches and sysroots
+
+Toolchain patches are straightforward enough. The compiler and linker need to know that our operating system exists. In order to be able to build and link any userspace libraries or applications, the Toolchain components need to know what properties our runtime libraries like libc, libpthread, libdl, etc have. The Toolchain also needs to know whether the runtime supports dynamic linking, position independent executables, thread-local storage, and other output-format related options.
+
+The OS sysroot requires a bit more explanation.
+
+When doing a native compile where host and target are the same, the natural place for system includes is somewhere like ``/usr/include`` while the natural location for system libraries is somewhere like ``/usr/lib`` or ``/lib/x86_64-linux-gnu/`` on a debian-based system. How does the compiler know where to look for the system headers and libraries?
+
+The answer is a mix of hardcoded default paths, and Toolchain configuration. The Ubuntu-shipped gcc 11.2.0 was configured with options like ``--prefix=/usr``, ``--libdir=/usr/lib`` and ``--libexecdir=/usr/lib``. By default, the compiler and friends assume that all these prefixes and libdirs are relative to ``/``.
+
+What if we want to cross-compile though? The headers and libraries for the host are not suitable to include or link into cross-compiled applications. A sysroot, or "system root", solves this problem. We create a sandbox directory that contains the normal Unix root directory structure underneath it, and drop our headers and system libraries in there. Instead of looking at ``/usr/include`` for ``<stdio.h>`` and ``/usr/lib`` for ``libz.so``, we can instruct the compiler via ``--sysroot=`` to look in our sandbox instead. ``/home/me/sandbox/i686-pc-serenity/usr/include`` instead of ``/usr/include``, etc.
+
 ### Makefile build, explained
 
+Going back to the original build steps for serenity, hopefully there's now some initution for what each step is actually doing:
+
+1. Build the cross-compilation toolchain (BuildIt.sh)
+1. Build the Kernel and Userland C++ files (Kernel/makeall.sh)
+1. Install all the files into a sysroot, and build a root filesystem for Userland (Kernel/sync.sh, called from makeall.sh)
+1. Point QEMU to the Kernel binary and rootfs, and boot the system (Kernel/run)
+
+However, the original flow is a bit of a lie. First, we download the toolchain source and patch it, configuring it for our cross-compilation target we just added to its playbook via the patches. But in order to build the compiler-provided C and C++ runtime libraries (libgcc.a, libstdc++, etc), we need the sysroot to already exist with LibC and other userland runtime libraries' headers. So the build script actually installs those headers into the sysroot location before even building the kernel as part of the Toolchain build, and then builds the compiler-provided runtime libraries.
+
+In the early days, the folks working on the Toolchain build didn't realize that we don't actually need to *build* the C library, pthread library, etc. and only need the headers for the runtime library build. This was corrected later (2020 time-frame).
 
 ---
 
