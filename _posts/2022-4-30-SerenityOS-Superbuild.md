@@ -51,7 +51,9 @@ At this point in time, the basics of the toolchain build were already in place:
 1. Ensure LibM and LibC headers are installed into the sysroot for the build
 1. Build the C++ standard library (libstdc++) and install it into the sysroot for the Kernel and Userland to link against.
 
-But wait, we can just download a version of gcc from our linux distribution's pacakage manager right? Why do we need to build the compiler and linker from source? The answer is simple to state, but subtle to explain: We need a cross-compiler toolchain that knows how to ``target`` serenity, and upstream gcc/binutils don't know anything about serenity.
+In the early days, the folks working on the Toolchain build didn't realize that we don't actually need to *build* the C library, Math library, etc. and only need the headers for the runtime library build. This was corrected later (2020 time-frame).
+
+But wait, we can just download a version of gcc from our linux distribution's package manager right? Why do we need to build the compiler and linker from source? The answer is simple to state, but subtle to explain: We need a cross-compiler toolchain that knows how to ``target`` serenity, and upstream gcc/binutils don't know anything about serenity.
 
 ### What's a cross-compiler?
 
@@ -124,16 +126,17 @@ What if we want to cross-compile though? The headers and libraries for the host 
 
 ### Makefile build, explained
 
-Going back to the original build steps for serenity, hopefully there's now some initution for what each step is actually doing:
+Going back to the original build steps for serenity, hopefully there's now some intuition for what the first step is actually doing:
 
 1. Build the cross-compilation toolchain (BuildIt.sh)
 1. Build the Kernel and Userland C++ files (Kernel/makeall.sh)
 1. Install all the files into a sysroot, and build a root filesystem for Userland (Kernel/sync.sh, called from makeall.sh)
 1. Point QEMU to the Kernel binary and rootfs, and boot the system (Kernel/run)
 
-However, the original flow is a bit of a lie. First, we download the toolchain source and patch it, configuring it for our cross-compilation target we just added to its playbook via the patches. But in order to build the compiler-provided C and C++ runtime libraries (libgcc.a, libstdc++, etc), we need the sysroot to already exist with LibC and other userland runtime libraries' headers. So the build script actually installs those headers into the sysroot location before even building the kernel as part of the Toolchain build, and then builds the compiler-provided runtime libraries.
+After the toolchain is setup, it's finally time to build the operating system.
 
-In the early days, the folks working on the Toolchain build didn't realize that we don't actually need to *build* the C library, pthread library, etc. and only need the headers for the runtime library build. This was corrected later (2020 time-frame).
+
+
 
 ---
 
