@@ -135,8 +135,58 @@ Going back to the original build steps for serenity, hopefully there's now some 
 
 After the toolchain is setup, it's finally time to build the operating system.
 
+The main build script at this point was Kernel/makeall.sh. The script itself is pretty simple. It declares all the build folders in a manual and copy-paste heavy manner, and then iterates over each folder running ``make clean`` and ``make``. If there's a script called ``./install.sh`` in that folder, it executes it to install built binary artifacts into the sysroot (Root/) 
+
+Each Makefile is fairly straightforward. They include a common file, Makefile.common from the root of the repository that sets the default CFLAGS, CXXFLAGS, etc, Declare set of object files, an APP or LIBRARY target, and use standard makefile trickery to have common .cpp --> .o rules generated.
+
+For example, here's Demos/HelloWorld/Makefile:
+
+```makefile
+include ../../Makefile.common
+
+OBJS = \
+    main.o
+
+APP = HelloWorld
+
+DEFINES += -DUSERLAND
+
+all: $(APP)
+
+$(APP): $(OBJS)
+	$(LD) -o $(APP) $(LDFLAGS) $(OBJS) -lgui -lcore -lc
+
+.cpp.o:
+	@echo "CXX $<"; $(CXX) $(CXXFLAGS) -o $@ -c $<
+
+-include $(OBJS:%.o=%.d)
+
+clean:
+	@echo "CLEAN"; rm -f $(APP) $(OBJS) *.d
+```
+
+At this point in time, there were only four libraries: LibC, LibM, LibCore, and LibGUI. And AK, the standard library, whose objects were (and still are) linked directly into LibC and the Kernel.
+
+The simplicity of the build here enabled a developer workflow where the developer could rebuild the component(s) they were currently working on, while keeping the build familiar to Unix gurus. In Andreas's Youtube videos from Early/Mid 2019, he'd frequently have commands like the following in the terminal history:
+
+```sh
+make -C ../LibGUI install && make -C ../TextEditor && sudo ./sync.sh && ./run
+```
+
+As a whole, the developer experience is simplistic, but comfortable to a certain kind of developer.
+
+As the project matured and attracted more developers, however, the vintage feel of Makefiles and shell scripts started to fall short. The main issue was that as sub-projects like LibWeb and LibJS started picking up contributors and more and more files were added to the project, the lack of a partial rebuild solution was really dragging on build times.
 
 
+### CMake and Build-level parallelism!
+
+WIP
+
+https://freenode.logbot.info/serenityos/20200506#c3809676
+
+https://github.com/SerenityOS/serenity/issues/2080
+
+https://github.com/SerenityOS/serenity/tree/c03dea0a4fbb9261e0708b25a42d9d585c70f872
 
 ---
 
