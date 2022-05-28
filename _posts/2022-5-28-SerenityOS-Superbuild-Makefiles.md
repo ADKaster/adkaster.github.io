@@ -1,6 +1,6 @@
 ---
 layout: post
-title: SerenityOS's Build System In-Depth
+title: "SerenityOS's Build System In-Depth, Part 1: Makefile City"
 ---
 
 The build system for the [Serenity Operating System](https://github.com/SerenityOS/serenity) looks daunting at first glace. Let's take a look under the hood :^)
@@ -12,6 +12,13 @@ Serenity is a complex software project. As on operating system monorepo, it has 
 As the project has expanded its scope over the last 3 and a half years, it has outgrown its build system a few times. The current build system architecture tries to make the build as portable as possible to as many host operating systems and distributions as possible.
 
 Before we get into the details of the current build system and the problems it tries to solve, however, some history is in order. How has the build system evolved over time?
+
+This series will go over the concepts, history, and rationale behind each phase of the Serenity operating system's build system design and implementation.
+
+1. Part 1: Makefile City (this post)
+1. Part 2: CMake Metropolis
+1. Part 3: Superbuild Metro Area
+
 
 ## In the beginning: Makefiles and shell scripts
 
@@ -177,16 +184,7 @@ As a whole, the developer experience is simplistic, but comfortable to a certain
 
 As the project matured and attracted more developers, however, the vintage feel of Makefiles and shell scripts started to fall short. The main issue was that as sub-projects like LibWeb and LibJS started picking up contributors and more and more files were added to the project, the lack of a partial rebuild solution was really dragging on build times.
 
+However, the full conversion to CMake deserves its own post, so we'll go over that in Part 2 :^).
 
-### CMake and Build-level parallelism!
-
-WIP
-
-https://freenode.logbot.info/serenityos/20200506#c3809676
-
-https://github.com/SerenityOS/serenity/issues/2080
-
-https://github.com/SerenityOS/serenity/tree/c03dea0a4fbb9261e0708b25a42d9d585c70f872
 
 ---
-
