@@ -129,8 +129,8 @@ sub-project was also initially written with a CMakeLists.txt at its core. Today 
 pull request goes through. Looking back on the build today, perhaps another meta-build system would have been better. CMake has some fundamental design decisions built-in that make creating a sane build 
 system for a cross-compiled build awkward, to say the least, as we'll see shortly.
 
-The progress towards a CMake build was tracked in [issue 2080](https://github.com/SerenityOS/serenity/issues/2080). After Andreas's initial experiment fizzled due to his inexperience with CMake, Sergey
-picked it back up in May 2020. 
+The progress towards a CMake build was tracked in [issue 2080](https://github.com/SerenityOS/serenity/issues/2080). After Andreas's initial experiment fizzled due to his inexperience with CMake,
+[solid_black](https://floss.social/@bugaevc) picked it back up in May 2020. 
 
 ```
 2020-03-28T17:08:21 #serenityos <pmr> kling: I just noticed the cmake_experiment branch. Did the experiment fail or did you just never finish?
@@ -164,7 +164,7 @@ host and target builds in the same project.
 
 ### The host build problem
 
-As part of the transition to CMake, Andreas and [solid_black](https://floss.social/@bugaevc) attempted to solve the "host build" problem. Looking at the mermaid diagram above, two things stand out:
+As part of the transition to CMake, Andreas and solid_black attempted to solve the "host build" problem. Looking at the mermaid diagram above, two things stand out:
 
 1. There are two different "builds" that must be completed with two different compilers
 2. Not all cross-compiled targets depend on the host build (other than the cross-compiler itself)
