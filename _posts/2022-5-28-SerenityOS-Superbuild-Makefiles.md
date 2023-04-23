@@ -16,7 +16,7 @@ Before we get into the details of the current build system and the problems it t
 This series will go over the concepts, history, and rationale behind each phase of the Serenity operating system's build system design and implementation.
 
 1. Part 1: Makefile City (this post)
-1. [Part 2: CMake Metropolis](2023-4-22-SerenityOS-Superbuild-CMake.md)
+1. [Part 2: CMake Metropolis](https://adkaster.github.io/SerenityOS-Superbuild-CMake/)
 1. Part 3: Superbuild Metro Area
 
 
@@ -24,7 +24,7 @@ This series will go over the concepts, history, and rationale behind each phase 
 
 Like many Unix-oriented software projects, the original build system for serenity was a maze of Makefiles, and some bespoke scripts to drive them.
 
-When Andreas published his first [monthly update video](https://www.youtube.com/watch?v=hE52D-zbX3g&list=PLMOpZvQB55bfp6ykOLayLqLrjcpv_Sw3P) on March 30, 2019, the build was very old school. As the project was a bit difficult to build [at that time](https://github.com/SerenityOS/serenity/tree/25f28a54a131c4aa188ba2c4c453c1b1648d02c6), let's take a look at how the build looked after a toolchain build helper script was added, all the way back in [pull request number 8](https://github.com/SerenityOS/serenity/tree/3761bc3ed7bc245e5ba4119136e6e33698b30300)! However, the build script still had a few bugs in it after that, so let's move forward [another few months](https://github.com/SerenityOS/serenity/tree/612e1c7023e6b828e9d3d2746cd885e92d4f3f04) until we get to a script that actually works from a fresh checkout (almost). 
+When Andreas published his first [monthly update video](https://www.youtube.com/watch?v=hE52D-zbX3g&list=PLMOpZvQB55bfp6ykOLayLqLrjcpv_Sw3P) on March 30, 2019, the build was very old school. As the project was a bit difficult to build [at that time](https://github.com/SerenityOS/serenity/tree/25f28a54a131c4aa188ba2c4c453c1b1648d02c6), let's take a look at how the build looked after a toolchain build helper script was added, all the way back in [pull request number 8](https://github.com/SerenityOS/serenity/tree/3761bc3ed7bc245e5ba4119136e6e33698b30300)! However, the build script still had a few bugs in it after that, so let's move forward [another few months](https://github.com/SerenityOS/serenity/tree/612e1c7023e6b828e9d3d2746cd885e92d4f3f04) until we get to a script that actually works from a fresh checkout (almost).
 
 Running the build steps from this commit boots into an early, yet still familiar serenity QEMU window.
 
@@ -33,7 +33,7 @@ Running the build steps from this commit boots into an early, yet still familiar
 The one modification I had to make at this commit was to change the ``install`` target in LibC/Makefile to depend on ``all`` instead of ``$(LIBRARY)``. You can try it yourself on a linux system by checking out ``612e1c7023e6b828e9d3d2746cd885e92d4f3f04`` from serenity, installing the prerequisites from Meta/BuildInstructions.md, and running the build. The build steps required are:
 
 ```console
-sed -i "s/install: \$(LIBRARY)/install: all/g" LibC/Makefile 
+sed -i "s/install: \$(LIBRARY)/install: all/g" LibC/Makefile
 cd Toolchain
 ./BuildIt.sh
 source UseIt.sh
@@ -142,7 +142,7 @@ Going back to the original build steps for serenity, hopefully there's now some 
 
 After the toolchain is setup, it's finally time to build the operating system.
 
-The main build script at this point was Kernel/makeall.sh. The script itself is pretty simple. It declares all the build folders in a manual and copy-paste heavy manner, and then iterates over each folder running ``make clean`` and ``make``. If there's a script called ``./install.sh`` in that folder, it executes it to install built binary artifacts into the sysroot (Root/) 
+The main build script at this point was Kernel/makeall.sh. The script itself is pretty simple. It declares all the build folders in a manual and copy-paste heavy manner, and then iterates over each folder running ``make clean`` and ``make``. If there's a script called ``./install.sh`` in that folder, it executes it to install built binary artifacts into the sysroot (Root/)
 
 Each Makefile is fairly straightforward. They include a common file, Makefile.common from the root of the repository that sets the default CFLAGS, CXXFLAGS, etc, Declare set of object files, an APP or LIBRARY target, and use standard makefile trickery to have common .cpp --> .o rules generated.
 

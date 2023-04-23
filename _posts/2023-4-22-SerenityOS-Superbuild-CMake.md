@@ -9,12 +9,12 @@ The build system for the [Serenity Operating System](https://github.com/Serenity
 
 This series will go over the concepts, history, and rationale behind each phase of the Serenity operating system's build system design and implementation.
 
-1. [Part 1: Makefile City](2022-5-28-SerenityOS-Superbuild-Makefiles.md)
+1. [Part 1: Makefile City](https://adkaster.github.io/SerenityOS-Superbuild-Makefiles/)
 1. Part 2: CMake Metropolis (this post)
 1. Part 3: Superbuild Metro Area
 
 
-In [the last part](2022-5-28-SerenityOS-Superbuild-Makefiles.md) we went over the state of the Serenity build system in mid-2019. The build system has
+In [the last part](https://adkaster.github.io/SerenityOS-Superbuild-Makefiles/) we went over the state of the Serenity build system in mid-2019. The build system has
 three main phases:
 
 1. Create cross-compiler and sysroot
@@ -110,7 +110,7 @@ Now, the build flow looks more like this:
 3. Build IPC servers, which use host tools to generate header files
 4. Build the rest of the system
 
-However, the actual build requirements aren't this simple. For example, we don't need to build IPC servers before we start building the kernel. We also don't need to build any of the Libraries that don't
+The actual build requirements aren't quite this simple. For example, we don't need to build IPC servers before we start building the kernel. We also don't need to build any of the Libraries that don't
 need any host tools after the host tools. A smarter build system could schedule those jobs in parallel. jcs alleviated some of the dependency tracking issues with the old build system with his changes, but the
 parallelism story is still not great. A keen-eyed observer might also notice that the top level Makefile also has a ``test`` target, which builds tests for the AK library and executes them.
 These days we have a lot more tests than just for AK built for the host :^).
@@ -124,13 +124,13 @@ By early 2020, the build system was looking about as complex as a Makefile build
 
 Andreas's desire to increase build parallelism still left CMake as a natural solution, though. While we had better dependency tracking, the build was still very serialized in its implementation.
 Starting at the end of 2019 and into early 2020, Andreas [prototyped](https://github.com/SerenityOS/serenity/commit/c03dea0a4fbb9261e0708b25a42d9d585c70f872) a conversion of the build to CMake.
-We were already using CMake in some capacity for the [Ports](ports.serenityos.net) system, and the experimental [Lagom](https://github.com/SerenityOS/serenity/tree/d0c230855d4b9e656b51771c33d665e7c129f223/Meta/Lagom) 
+We were already using CMake in some capacity for the [Ports](https://ports.serenityos.net) system, and the experimental [Lagom](https://github.com/SerenityOS/serenity/tree/d0c230855d4b9e656b51771c33d665e7c129f223/Meta/Lagom)
 sub-project was also initially written with a CMakeLists.txt at its core. Today Lagom is the core of the Ladybird Browser, as well as a significant amount of the continuous integration testing each
-pull request goes through. Looking back on the build today, perhaps another meta-build system would have been better. CMake has some fundamental design decisions built-in that make creating a sane build 
+pull request goes through. Looking back on the build today, perhaps another meta-build system would have been better. CMake has some fundamental design decisions built-in that make creating a sane build
 system for a cross-compiled build awkward, to say the least, as we'll see shortly.
 
 The progress towards a CMake build was tracked in [issue 2080](https://github.com/SerenityOS/serenity/issues/2080). After Andreas's initial experiment fizzled due to his inexperience with CMake,
-[solid_black](https://floss.social/@bugaevc) picked it back up in May 2020. 
+[solid_black](https://floss.social/@bugaevc) picked it back up in May 2020.
 
 ```
 2020-03-28T17:08:21 #serenityos <pmr> kling: I just noticed the cmake_experiment branch. Did the experiment fail or did you just never finish?
@@ -159,7 +159,7 @@ overall build times for the project.
 
 > With Makefiles, it was a constant battle to keep things building in the right order while spreading the compilation tasks across multiple cores. Moving to CMake was a big task, but one that has paid off greatly, both in terms of maintainability and build performance.
 
-However, the avoidance of the host build problem kept causing issues as more and more complex build stages were added to the project. macOS users in particular kept running into build issues as we mixed
+The avoidance of the host build problem kept causing issues as more and more complex build stages were added to the project. macOS users in particular kept running into build issues as we mixed
 host and target builds in the same project.
 
 ### The host build problem
@@ -169,16 +169,13 @@ As part of the transition to CMake, Andreas and solid_black attempted to solve t
 1. There are two different "builds" that must be completed with two different compilers
 2. Not all cross-compiled targets depend on the host build (other than the cross-compiler itself)
 
-Even today, we split out the cross-compiler build into its own distinct first step, however. It's a lot simpler to obtain your toolchain completely separately from the actual software you're trying to compile,
-as we'll see in more detail later.
+Even today, we split out the cross-compiler build into its own distinct first step. It's a lot simpler to obtain your toolchain completely separately from the actual software you're trying to compile.
 
 One artifact of the Makefile build system as jcs left it was that choosing whether a subdirectory built with the host or target compiler was as simple as setting or not setting a ``USE_HOST_CXX`` variable
-in each individual Makefile, as can be seen here:
+in each individual Makefile, as can be seen [here](https://github.com/SerenityOS/serenity/blob/d61131945d15e64cdf7ab0a2cbe584a915599428/Makefile.common#L25-L37)
 
-https://github.com/SerenityOS/serenity/blob/d61131945d15e64cdf7ab0a2cbe584a915599428/Makefile.common#L25-L37
-
-However, in CMake it's not quite that simple. A CMake build has two distinct phases: configuration, and build. Because CMake is a meta-build system and not a build system, it always generates the real
-build system after the fact. On Unix-like operating systems, the preference is normally ninja first, then Makefiles. Makefiles are the default, however.
+In CMake it's not quite that simple. A CMake build has two distinct phases: configuration, and build. Because CMake is a meta-build system and not a build system, it always generates the real
+build system after the fact. On Unix-like operating systems, the preference is normally ninja first, then Makefiles. Makefiles are the default.
 
 When generating a build system, CMake sets up the compiler, linker, and default flags for the configured [toolchain](https://cmake.org/cmake/help/latest/manual/cmake-toolchains.7.html). Each binary directory
 of a CMake build can have exactly one configured Toolchain. What does this mean in practice? If you want to have an executable compiled and linked with one compiler, and an entire operating system compiled
