@@ -120,36 +120,7 @@ These days we have a lot more tests than just for AK built for the host :^).
 
 By early 2020, the build system was looking about as complex as a Makefile build system can while still being editable. Organized into blocks, the build phase looked something like the the diagram below.
 
-```mermaid
-flowchart TD
-    A[Cross-compiler]
-    B[Host compiler]
-    CA[Host Libraries]
-    C[Code Generators]
-    D{{Generator-consuming targets}}
-    E[IPC Servers]
-    F[LibHTML]
-    G[Libraries]
-    H[Disk Image]
-    I[Applications]
-    J[Kernel]
-    K[Tests]
-
-    subgraph "Host build build (host)"
-    B --> A
-    CA --> K
-    B --> CA --> C
-    end
-
-    subgraph "SerenityOS build (cross)"
-    C --> D
-    D --> E & F
-    E & F & G --> I
-    I & J --> H
-    K ~~~ J
-    G ~~~ J
-    end
-```
+![BuildFlow](/images/cmake/mermaid-build.png)
 
 Andreas's desire to increase build parallelism still left CMake as a natural solution, though. While we had better dependency tracking, the build was still very serialized in its implementation.
 Starting at the end of 2019 and into early 2020, Andreas [prototyped](https://github.com/SerenityOS/serenity/commit/c03dea0a4fbb9261e0708b25a42d9d585c70f872) a conversion of the build to CMake.
