@@ -16,7 +16,7 @@ Before we get into the details of the current build system and the problems it t
 This series will go over the concepts, history, and rationale behind each phase of the Serenity operating system's build system design and implementation.
 
 1. Part 1: Makefile City (this post)
-1. Part 2: CMake Metropolis
+1. [Part 2: CMake Metropolis](2023-4-22-SerenityOS-Superbuild-CMake.md)
 1. Part 3: Superbuild Metro Area
 
 
